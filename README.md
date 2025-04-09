@@ -1,102 +1,118 @@
-# 😺 Agentless
+# 🐾 Agentless-Java
 
-<p align="center">
-    <a href="https://arxiv.org/abs/2407.01489"><img src="https://img.shields.io/badge/📃-Arxiv-b31b1b?style=for-the-badge"></a>
-    <a href="https://github.com/OpenAutoCoder/Agentless/blob/master/LICENSE"><img src="https://forthebadge.com/images/badges/license-mit.svg" style="height: 28px"></a>
-</p>
+**Agentless-Java** is an extension of the [Agentless](https://github.com/OpenAutoCoder/Agentless) framework, adapted to support automated fault localization for Java projects using Large Language Models (LLMs). This project focuses on replicating the Agentless pipeline in the Java ecosystem, addressing its object-oriented design, rigid type system, and other language-specific challenges.
 
-<p align="center">
-    <big><a href="#-news">😽News</a></big> |
-    <big><a href="#-setup">🐈Setup</a></big> |
-    <big><a href="#-comparison">🧶Comparison</a></big> | 
-    <big><a href="#-artifacts">🐈‍⬛Artifacts</a></big> |
-    <big><a href="#-citation">📝Citation</a></big> |
-    <big><a href="#-acknowledgement">😻Acknowledgement</a></big>
-</p>
+> ⚠️ **Note**: This is a work-in-progress implementation. Our current focus is on the fault localization pipeline. Patch generation and validation are under development.
 
-## 😽 News 
+## 📁 Directory Overview
 
-- *Dec 2nd, 2024*: We integrated Agentless with Claude 3.5 Sonnet to achieve 40.7% and 50.8% solve rate on SWE-bench lite and verified 
-- *Oct 28th, 2024*: We just released OpenAutoCoder-Agentless 1.5! 
-- *July 1st, 2024*: We just released OpenAutoCoder-Agentless 1.0! **Agentless** currently is the best open-source approach on SWE-bench lite with 82 fixes (27.3%) and costing on average $0.34 per issue.
+This folder contains the code and evaluation for fault localization on the SWE-bench-Java benchmark. It includes:
 
-## 😺 About 
+- File-level localization using both LLM prompting and embedding-based retrieval
+- Element-level localization (classes/methods) via AST-based skeleton extraction
+- Line-level fault localization with LLM + patch diff heuristics
 
-**Agentless** is an *agentless* approach to automatically solve software development problems. To solve each issue, **Agentless** follows a simple three phase process: localization, repair, and patch validation.
-- 🙀 **Localization**: Agentless employs a hierarchical process to first localize the fault to specific files, then to relevant classes or functions, and finally to fine-grained edit locations
-- 😼 **Repair**: Agentless takes the edit locations and samples multiple candidate patches per bug in a simple diff format
-- 😸 **Patch Validation**: Agentless selects the regression tests to run and generates additional reproduction test to reproduce the original error. Using the test results, Agentless re-ranks all remaining patches to selects one to submit
+For background, see our [📄 midterm report](./Agentless-Java_MidtermReport.pdf).
 
-## 🐈 Setup
+---
 
-First create the environment 
+## 🚀 How to Run the Pipeline
 
-```shell
-git clone https://github.com/OpenAutoCoder/Agentless.git
-cd Agentless
+Ensure you are inside the `agentless-java/` directory and have installed all dependencies.
 
-conda create -n agentless python=3.11 
-conda activate agentless
-pip install -r requirements.txt
-export PYTHONPATH=$PYTHONPATH:$(pwd)
+### 🔹 Step 1 & 2: Repository Structure + LLM-Based File Localization
+
+Run:
+
+```bash
+python StructureTree.py
 ```
 
-<details><summary>⏬ Developer Setup</summary>
-<div>
+This generates a structured view of the Java repository and identifies suspicious files using Gemini-based LLMs.
 
-```shell
-# for contribution, please install the pre-commit hook.
-pre-commit install  # this allows a more standardized code style
+> 🔑 **Important**: Replace the Gemini API key in the script with your own key.
+
+---
+
+### 🔹 Step 3: Embedding-Based File Localization
+
+To perform embedding-based retrieval of suspicious files:
+
+```bash
+python agentlessstep3.py
 ```
 
-</div>
-</details>
+Make sure to:
+- Replace the Gemini API key
+- Edit the path to the repository structure file (output from Step 1)
 
-Then export your OpenAI API key 
-```shell
-export OPENAI_API_KEY={key_here}
+To evaluate file-level accuracy:
+
+```bash
+python agentlessstep3accueva.py
 ```
 
-Now you are ready to run **Agentless** on the problems in SWE-bench! 
+---
 
-> [!NOTE]
-> 
-> To reproduce the full SWE-bench lite experiments and follow our exact setup as described in the paper. Please see this [README](https://github.com/OpenAutoCoder/Agentless/blob/main/README_swebench.md)
+### 🔹 Step 4: Element-Level Localization
 
-## 🧶 Comparison
+```bash
+python batch_process.py \
+  --input_file [input_data_file].json \
+  --output_file [results_file].json \
+  --llm [provider] \
+  --api_key [your_api_key] \
+  --model [model_name]
+```
 
-Below shows the comparison graph between **Agentless** and the best open-source agent-based approaches on SWE-bench lite
+- The input file should be the suspicious file list from Step 3.
+- Supported `--llm` values include: `openai`, `anthropic`, `gemini`.
 
-<p align="center">
-<img src="./resources/comparison_graph.png" style="width:75%; margin-left: auto; margin-right: auto;">
-</p>
+---
 
-## 🐈‍⬛ Artifacts
+### 🔹 Step 5: Line-Level Localization
 
-You can download the complete artifacts of **Agentless** in our [v1.5.0 release](https://github.com/OpenAutoCoder/Agentless/releases/tag/v1.5.0):
-- 🐈‍⬛ agentless_swebench_lite: complete Agentless run on SWE-bench Lite
-- 🐈‍⬛ agentless_swebench_verified: complete Agentless run on SWE-bench Verified
-- 🐈‍⬛ swebench_repo_structure: preprocessed structure information for each SWE-Bench problem
+```bash
+python step5.py
+```
 
-You can also checkout `classification/` folder to obtain our manual classifications of SWE-bench-lite as well as our filtered SWE-bench-lite-*S* problems.
+- Input file: the JSON output from Step 4.
+- Output: predicted line-level edit locations.
+
+---
+
+## 📊 Evaluation (from Midterm Report)
+
+- **File-Level**
+  - Superset Accuracy: 41.76%
+  - Binary Touch Accuracy: 95.60%
+- **Element-Level**
+  - Binary Touch Accuracy: 90.00%
+- **Line-Level**
+  - Binary Touch Accuracy: 10.00%
+
+These results demonstrate strong potential at early-stage localization and a solid foundation for downstream repair and validation.
+
+---
 
 ## 📝 Citation
 
+If you use this code or refer to our work, please cite our midterm report:
+
 ```bibtex
-@article{agentless,
-  author    = {Xia, Chunqiu Steven and Deng, Yinlin and Dunn, Soren and Zhang, Lingming},
-  title     = {Agentless: Demystifying LLM-based Software Engineering Agents},
-  year      = {2024},
-  journal   = {arXiv preprint},
+@misc{agentlessjava2025,
+  title={Agentless-Java: Adapting Agentless Paradigm to Java Program Repair},
+  author={Tianyi Huang and Wenqi Liao and Yiwei Wang and Yuyang Wang},
+  year={2025},
+  howpublished={CS 598 Midterm Report, University of Illinois Urbana-Champaign},
+  url={https://github.com/upb3y/Agentless/tree/main/agentless-java}
 }
 ```
 
-> [!NOTE]
-> 
-> The first two authors contributed equally to this work, with author order determined via [*Nigiri*](https://senseis.xmp.net/?Nigiri)
+---
 
-## 😻 Acknowledgement 
+## 🙌 Acknowledgements
 
-* [SWE-bench](https://www.swebench.com/)
-* [Aider](https://github.com/paul-gauthier/aider)
-* [SWE-bench-docker](https://github.com/aorwall/SWE-bench-docker)
+This work builds on the original [Agentless](https://github.com/OpenAutoCoder/Agentless) framework and was evaluated using the [SWE-bench-Java](https://arxiv.org/abs/2408.14354) benchmark.
+
+---

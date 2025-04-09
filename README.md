@@ -12,7 +12,7 @@ This folder contains the code and evaluation for fault localization on the SWE-b
 - Element-level localization (classes/methods) via AST-based skeleton extraction
 - Line-level fault localization with LLM + patch diff heuristics
 
-For background, see our [📄 midterm report](./Agentless-Java_MidtermReport.pdf).
+For background, see our [📄 midterm report](agentless-java/Agentless-Java_MidtermReport.pdf).
 
 ---
 

@@ -1,0 +1,6 @@
+# requirements.txt
+javalang==0.13.0  # For Java parsing
+pygments==2.15.1  # Optional: For syntax highlighting in debug output
+panda
+fsspec
+huggingface_hub

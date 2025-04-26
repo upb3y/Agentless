@@ -61,29 +61,7 @@ def process_dataset_entry_via_cli(
     log.info(f"\n--- Processing Instance via CLI: {instance_id} ---")
     log.info(f"Repo URL: {repo_url}")
     log.info(f"Commit Hash: {commit_hash}")
-
-    output_filename = ""
-    org = None
-    repo = None
-    if '/' in repo_short_name:
-        try:
-            # Split the string at the first '/' found
-            org, repo = repo_short_name.split('/', 1)
-        except ValueError:
-            # This handles cases where split might fail unexpectedly, though unlikely after checking '/'
-            print(f"Error: Could not properly split repo_short_name: {repo_short_name}")
-    else:
-        # Handle cases where the format is unexpected (no '/')
-        print(f"Error: repo_short_name format is invalid (expected 'org/repo'): {repo_short_name}")
-        # Decide how to proceed: skip, use defaults, etc.
-        # For example, you might want to skip this entry:
-        # continue # if in a loop
-
-    # --- Generate the output filename and full path (only if org and repo were found) ---
-    if org and repo:
-        # Generate the desired filename
-        output_filename = f"{org}_{repo}_{commit_hash[:6]}.jsonl"
-    output_file = output_file + "/" + output_filename
+    
     # Construct the command line arguments
     command = [
         sys.executable, # Use the same python interpreter that's running this script
@@ -91,6 +69,7 @@ def process_dataset_entry_via_cli(
         "--repo_url", repo_url,
         "--commit_hash", commit_hash,
         "--output_file", output_file, # Pass the final output file path
+        "--instance_id", instance_id
     ]
 
     log.info(f"Executing command: {' '.join(command)}")
@@ -100,7 +79,7 @@ def process_dataset_entry_via_cli(
         # We don't need the timeout here if the subprocess handles its own Docker timeout
         process = subprocess.run(
             command,
-            capture_output=True, # Capture stdout/stderr
+            capture_output=False, # Capture stdout/stderr
             text=True,           # Decode output as text
             check=False,         # Don't raise exception on non-zero exit
             encoding='utf-8',

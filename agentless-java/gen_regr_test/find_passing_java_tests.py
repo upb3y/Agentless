@@ -462,6 +462,7 @@ def main():
     parser.add_argument("--repo_url", required=True, help="URL of the Git repository to clone.")
     parser.add_argument("--commit_hash", required=True, help="Commit hash to checkout and test.")
     parser.add_argument("--output_file", required=True, help="Path to the output JSONL file.")
+    parser.add_argument("--instance_id", required=True, help="Given Instance ID")
     parser.add_argument("--timeout", type=int, default=1800, help="Timeout for Docker execution.")
     parser.add_argument("--run_id", default=f"find_passing_java_tests_llm_{int(time.time())}", help="Unique ID for the run.")
 
@@ -515,8 +516,8 @@ def main():
         # --- Generate Instance ID ---
         # (Instance ID generation remains the same)
         repo_name = args.repo_url.split('/')[-1].replace('.git', '')
-        instance_id = f"{repo_name}_{args.commit_hash[:8]}"
-        print(f"Generated Instance ID: {instance_id}")
+        instance_id =args.instance_id
+        print(f"Instance ID: {instance_id}")
 
 
         # --- Execute Test Run (using temp repo path) ---

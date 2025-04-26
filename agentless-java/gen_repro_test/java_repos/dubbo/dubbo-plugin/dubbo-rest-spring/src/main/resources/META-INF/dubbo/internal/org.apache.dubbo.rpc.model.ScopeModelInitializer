@@ -1,1 +1,0 @@
-rest-spring=org.apache.dubbo.rpc.protocol.tri.rest.support.spring.RestSpringScopeModelInitializer

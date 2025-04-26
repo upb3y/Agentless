@@ -1,0 +1,66 @@
+
+generate_tests_prompt_template = """
+You are an expert Java test generation assistant.
+Your task is to generate a JUnit 5 test class to reproduce a specific software bug described in a GitHub issue.
+
+**GitHub Issue Description:**
+--- BEGIN ISSUE ---
+{problem_statement}
+--- END ISSUE ---
+
+**Instructions:**
+
+1.  **Analyze the Issue:** Understand the bug described in the issue statement. Identify the conditions required to trigger it.
+2.  **Generate JUnit 5 Test Class:** Create a *complete*, *compilable* Java class using JUnit 5 (`org.junit.jupiter.api.*`).
+    * Include necessary `import` statements.
+    * Define a `public` class (e.g., `ReproduceBugTest`). Do **not** include a `package` declaration.
+    * Create at least one `public` test method annotated with `@Test`.
+    * The test method(s) should contain the precise logic to trigger the bug described in the issue.
+3.  **Output Requirements:** The test method(s) MUST print **exactly one** of the following messages to standard output based on the execution outcome:
+    * `"Issue reproduced"`: If the test successfully triggers the described bug (e.g., catches the expected exception, observes the incorrect behavior).
+    * `"Issue resolved"`: If the test runs *without* triggering the bug, indicating the bug might be fixed in the environment where the test is run (e.g., the expected exception is *not* thrown, the correct behavior is observed).
+    * `"Other issues"`: If the test encounters an unexpected error (e.g., different exception, setup failure, ambiguous outcome). Print any unexpected exception stack traces to standard *error*.
+4.  **Completeness:** Ensure the generated code is self-contained and ready to be compiled and executed within the context of the target project's classpath.
+5.  **Format:** Wrap the *entire* Java test class in a single ```java ... ``` markdown block.
+
+**Example Structure:**
+
+```java
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
+// Potentially import classes from the project being tested
+
+public class ReproduceSpecificBugTest {{ // Choose a descriptive name
+
+    @Test
+    void testBuggyScenario() {{
+        try {{
+            // 1. Setup code to reach the buggy state (if necessary)
+            // 2. Code that directly triggers the bug based on the issue description
+            Object result = callCodeThatShouldFail();
+
+            // 3. If the bug involves WRONG behavior rather than an exception, assert that here.
+            //    If the wrong behavior occurs, print "Issue reproduced".
+            //    If the correct behavior occurs, print "Issue resolved".
+             System.out.println("Issue resolved"); // Default if no exception/wrong behavior detected
+
+        }} catch (ExpectedBugException e) {{
+            // 4. If the bug involves a SPECIFIC exception being thrown
+            System.out.println("Issue reproduced");
+        }} catch (Exception unexpectedException) {{
+            // 5. Catch any OTHER exceptions during the test
+            System.err.println("Test failed with unexpected exception:");
+            unexpectedException.printStackTrace(System.err); // Print stack trace to stderr
+            System.out.println("Other issues");
+        }}
+    }}
+
+    // Helper methods (if needed)
+    private Object callCodeThatShouldFail() throws Exception {{
+        // Replace with actual method calls from the target project
+        throw new RuntimeException("Placeholder: Replace with actual call"); // Placeholder
+    }}
+}}
+```
+Now, generate the Java test class for the provided issue.
+"""

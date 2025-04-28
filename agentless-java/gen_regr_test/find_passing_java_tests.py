@@ -9,6 +9,7 @@ import time
 import uuid
 import traceback
 from typing import List, Dict, Set, Tuple, Optional
+from dotenv import load_dotenv
 
 # Attempt to import necessary libraries
 try:
@@ -38,7 +39,8 @@ except ImportError:
 
 
 # --- LLM Configuration ---
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+load_dotenv()
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 LLM_ENABLED = bool(GEMINI_API_KEY) # Flag to track if LLM can be used
 
 if not LLM_ENABLED:

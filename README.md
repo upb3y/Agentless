@@ -9,19 +9,19 @@ The pipeline now covers **fault localization → patch generation → regression
 
 | Folder / Script | Purpose |
 |-----------------|---------|
-| `StructureTree.py` | Build repository tree and prompt-based file-level localisation (LLM) |
-| `agentlessstep3*.py` | Embedding retrieval, accuracy evals for file-level localisation |
-| `batch_process.py` | Class/​method-level localisation via AST skeletons + LLM |
-| `step5.py` | Line-level localisation with heuristic diff scoring |
+| `StructureTree.py` | Build repository tree and prompt-based file-level localization (LLM) |
+| `agentlessstep3*.py` | Embedding retrieval, accuracy evals for file-level localization |
+| `batch_process.py` | Class/​method-level localization via AST skeletons + LLM |
+| `step5.py` | Line-level localization with heuristic diff scoring |
 | `repair/…` | LLM-based patch generation utilities (Step 6) |
-| `gen_regr_test/run_test_for_dataset.py` | Dockerized **regression test harness** over a HF dataset (Step 7) |
+| `gen_regr_test/...` | Dockerized **regression test harness** over a HF dataset (Step 7) |
 | `gen_repro_test/...` | Generate reproduction test and rank & select passing patches (Step 8) |
 | `docs/` | Reports, figures, and sample outputs |
 
 *See our [📄 midterm report](agentless-java/Agentless-Java_MidtermReport.pdf) for the design rationale of Steps 1-5.*
 *See our [📄 final report](agentless-java/Agentless-Java_FinalReport.pdf) for the whole pipeline.*
 
----
+---local
 
 ## 🚀 End-to-End Pipeline
 
@@ -153,7 +153,7 @@ The output file `ranked_reproduction_patches.jsonl` contains the final selected 
 
 ```bibtex
 @misc{agentlessjava2025,
-  title={Agentless-Java: From Fault Localisation to Fully Automated Repair in the Java Ecosystem},
+  title={Agentless-Java: From Fault Localization to Fully Automated Repair in the Java Ecosystem},
   author={Tianyi Huang and Wenqi Liao and Yiwei Wang and Yuyang Wang},
   year={2025},
   howpublished={University of Illinois Urbana–Champaign, CS 598 Final Report},

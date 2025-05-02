@@ -33,14 +33,14 @@ The pipeline now covers **fault localisation → patch generation → regression
 python StructureTree.py          # builds AST & prompts Gemini (or OpenAI)
 ````
 
-### 🔹 Step 3 — Embedding-Based File Localisation
+### 🔹 Step 3 — Embedding-Based File Localization
 
 ```bash
 python agentlessstep3.py          # produces top-k suspicious files
 python agentlessstep3accueva.py   # optional: compute accuracy against GT
 ```
 
-### 🔹 Step 4 — Element-Level Localisation
+### 🔹 Step 4 — Element-Level Localization
 
 ```bash
 python batch_process.py \
@@ -51,7 +51,7 @@ python batch_process.py \
   --model claude-3-sonnet-20240229
 ```
 
-### 🔹 Step 5 — Line-Level Localisation
+### 🔹 Step 5 — Line-Level Localization
 
 ```bash
 python step5.py                   # emits line_preds.json
@@ -106,18 +106,6 @@ The ranking script promotes patches that (1) make previously failing tests pass,
 
 ---
 
-## 📊 Current Evaluation (SWE-bench-Java)
-
-| Stage                         | Metric                      | Score      |
-| ----------------------------- | --------------------------- | ---------- |
-| File-Level                    | Superset Acc.               | **41.8 %** |
-| File-Level                    | Binary Touch                | **95.6 %** |
-| Element-Level                 | Binary Touch                | **60.0 %** |
-| Line-Level                    | Superset Acc.               | **7.69 %** |
-| Patch Gen → Rank (End-to-End) | Full Fix Rate (preliminary) | **3.2 %**  |
-
----
-
 ## 📝 Citation
 
 ```bibtex
@@ -136,7 +124,5 @@ The ranking script promotes patches that (1) make previously failing tests pass,
 
 This project builds on the excellent [Agentless](https://github.com/OpenAutoCoder/Agentless) framework and evaluates fixes with the
 [SWE-bench-Java](https://arxiv.org/abs/2408.14354) benchmark.
-
----
 
 ```

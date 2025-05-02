@@ -28,7 +28,7 @@ The pipeline now covers **fault localisation → patch generation → regression
 > Ensure you are inside `agentless-java/` and have installed all Python + Docker dependencies.  
 > Wherever a script calls an LLM, **replace the API key placeholders** with your own credentials.
 
-### 🔹 Step 1 & 2 — Repository Structure + LLM File Localisation
+### 🔹 Step 1 & 2 — Repository Structure + LLM File Localization
 ```bash
 python StructureTree.py          # builds AST & prompts Gemini (or OpenAI)
 ````

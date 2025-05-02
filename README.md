@@ -36,8 +36,8 @@ python StructureTree.py          # builds AST & prompts Gemini (or OpenAI)
 ### 🔹 Step 3 — Embedding-Based File Localization
 
 ```bash
-python agentlessstep3.py          # produces top-k suspicious files
-python agentlessstep3accueva.py   # optional: compute accuracy against GT
+agentlessstep3.py          # upload and run using colab: produces top-k suspicious files
+agentlessstep3accueva.py   # upload and run using colab: optional: compute accuracy against GT
 ```
 The output after step 3 will be `suspicious_files.json`.
 

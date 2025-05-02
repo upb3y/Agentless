@@ -39,7 +39,7 @@ python StructureTree.py          # builds AST & prompts Gemini (or OpenAI)
 python agentlessstep3.py          # produces top-k suspicious files
 python agentlessstep3accueva.py   # optional: compute accuracy against GT
 ```
-The output after step 3 will be suspicious_files.json.
+The output after step 3 will be `suspicious_files.json`.
 
 ### 🔹 Step 4 — Element-Level Localization
 

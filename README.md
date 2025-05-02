@@ -21,7 +21,6 @@ The pipeline now covers **fault localization → patch generation → regression
 *See our [📄 midterm report](agentless-java/Agentless-Java_MidtermReport.pdf) for the design rationale of Steps 1-5.*
 *See our [📄 final report](agentless-java/Agentless-Java_FinalReport.pdf) for the whole pipeline.*
 
----local
 
 ## 🚀 End-to-End Pipeline
 

@@ -1,7 +1,7 @@
-# 🐾 Agentless-Java
+# 🐭 Agentless-Java
 
 **Agentless-Java** extends the original [Agentless](https://github.com/OpenAutoCoder/Agentless) framework to **fully automate Java program repair** with Large Language Models (LLMs).  
-The pipeline now covers **fault localisation → patch generation → regression validation → patch ranking**, closing the loop from bug discovery to candidate fix selection.
+The pipeline now covers **fault localization → patch generation → regression validation → patch ranking**, closing the loop from bug discovery to candidate fix selection.
 
 ---
 

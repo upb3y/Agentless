@@ -1,110 +1,131 @@
+
 # 🐾 Agentless-Java
 
-**Agentless-Java** is an extension of the [Agentless](https://github.com/OpenAutoCoder/Agentless) framework, adapted to support automated fault localization for Java projects using Large Language Models (LLMs). This project focuses on replicating the Agentless pipeline in the Java ecosystem, addressing its object-oriented design, rigid type system, and other language-specific challenges.
+**Agentless-Java** extends the original [Agentless](https://github.com/OpenAutoCoder/Agentless) framework to **fully automate Java program repair** with Large Language Models (LLMs).  
+The pipeline now covers **fault localisation → patch generation → regression validation → patch ranking**, closing the loop from bug discovery to candidate fix selection.
 
-> ⚠️ **Note**: This is a work-in-progress implementation. Our current focus is on the fault localization pipeline. Patch generation and validation are under development.
+---
 
 ## 📁 Directory Overview
 
-This folder contains the code and evaluation for fault localization on the SWE-bench-Java benchmark. It includes:
+| Folder / Script | Purpose |
+|-----------------|---------|
+| `StructureTree.py` | Build repository tree and prompt-based file-level localisation (LLM) |
+| `agentlessstep3*.py` | Embedding retrieval, accuracy evals for file-level localisation |
+| `batch_process.py` | Class/​method-level localisation via AST skeletons + LLM |
+| `step5.py` | Line-level localisation with heuristic diff scoring |
+| `repair/…` | LLM-based patch generation utilities (Step 6) |
+| `gen_regr_test/run_test_for_dataset.py` | Dockerized **regression test harness** over a HF dataset (Step 7) |
+| `gen_repro_test/rank_results.py` | Post-processing: rank & select passing patches (Step 8) |
+| `docs/` | Reports, figures, and sample outputs |
 
-- File-level localization using both LLM prompting and embedding-based retrieval
-- Element-level localization (classes/methods) via AST-based skeleton extraction
-- Line-level fault localization with LLM + patch diff heuristics
-
-For background, see our [📄 midterm report](agentless-java/Agentless-Java_MidtermReport.pdf).
-
----
-
-## 🚀 How to Run the Pipeline
-
-Ensure you are inside the `agentless-java/` directory and have installed all dependencies.
-
-### 🔹 Step 1 & 2: Repository Structure + LLM-Based File Localization
-
-Run:
-
-```bash
-python StructureTree.py
-```
-
-This generates a structured view of the Java repository and identifies suspicious files using Gemini-based LLMs.
-
-> 🔑 **Important**: Replace the Gemini API key in the script with your own key.
+*See our [📄 midterm report](agentless-java/Agentless-Java_MidtermReport.pdf) for the design rationale of Steps 1-5.*
 
 ---
 
-### 🔹 Step 3: Embedding-Based File Localization
+## 🚀 End-to-End Pipeline
 
-To perform embedding-based retrieval of suspicious files:
+> Ensure you are inside `agentless-java/` and have installed all Python + Docker dependencies.  
+> Wherever a script calls an LLM, **replace the API key placeholders** with your own credentials.
+
+### 🔹 Step 1 & 2 — Repository Structure + LLM File Localisation
+```bash
+python StructureTree.py          # builds AST & prompts Gemini (or OpenAI)
+````
+
+### 🔹 Step 3 — Embedding-Based File Localisation
 
 ```bash
-python agentlessstep3.py
+python agentlessstep3.py          # produces top-k suspicious files
+python agentlessstep3accueva.py   # optional: compute accuracy against GT
 ```
 
-Make sure to:
-- Replace the Gemini API key
-- Edit the path to the repository structure file (output from Step 1)
-
-To evaluate file-level accuracy:
-
-```bash
-python agentlessstep3accueva.py
-```
-
----
-
-### 🔹 Step 4: Element-Level Localization
+### 🔹 Step 4 — Element-Level Localisation
 
 ```bash
 python batch_process.py \
-  --input_file [input_data_file].json \
-  --output_file [results_file].json \
-  --llm [provider] \
-  --api_key [your_api_key] \
-  --model [model_name]
+  --input_file suspicious_files.json \
+  --output_file element_preds.json \
+  --llm anthropic \
+  --api_key $CLAUDE_KEY \
+  --model claude-3-sonnet-20240229
 ```
 
-- The input file should be the suspicious file list from Step 3.
-- Supported `--llm` values include: `openai`, `anthropic`, `gemini`.
-
----
-
-### 🔹 Step 5: Line-Level Localization
+### 🔹 Step 5 — Line-Level Localisation
 
 ```bash
-python step5.py
+python step5.py                   # emits line_preds.json
 ```
 
-- Input file: the JSON output from Step 4.
-- Output: predicted line-level edit locations.
+### 🔹 Step 6 — **Repair (Patch Generation)**
+
+```bash
+python repair/generate_patches.py \
+  --bug_info line_preds.json \
+  --llm openai \
+  --api_key $OPENAI_KEY \
+  --model gpt-4o-mini
+```
+
+The script streams multiple candidate patches per bug and stores them in
+`generated_patches.jsonl`.
+
+### 🔹 Step 7 — **Regression Validation**
+
+```bash
+python gen_regr_test/run_test_for_dataset.py \
+  --dataset_name Daoguang/Multi-SWE-bench \
+  --dataset_split java_verified \
+  --output_file test_run_results.jsonl \
+  --start_index 0 --end_index 50 \
+  --timeout 1800 \
+  --run_id sweep_$(date +%s)
+```
+
+Key flags (excerpt from the script):
+
+| Flag              | Default                      | Description                                      |
+| ----------------- | ---------------------------- | ------------------------------------------------ |
+| `--dataset_name`  | `"Daoguang/Multi-SWE-bench"` | HF dataset to evaluate against                   |
+| `--dataset_split` | `"java_verified"`            | Data split (`train`, `test`, etc.)               |
+| `--timeout`       | `1800`                       | Seconds passed to the underlying Docker test run |
+
+Each candidate patch is executed in an isolated Docker container running the project’s test suite. Results are appended to `test_run_results.jsonl`.
+
+### 🔹 Step 8 — **Patch Ranking / Re-ranking**
+
+```bash
+python gen_repro_test/rank_results.py \
+  --results_file test_run_results.jsonl \
+  --patches_file generated_patches.jsonl \
+  --output_file ranked_patches.jsonl
+```
+
+The ranking script promotes patches that (1) make previously failing tests pass,
+(2) keep unrelated tests green, and (3) minimise the diff footprint.
 
 ---
 
-## 📊 Evaluation (from Midterm Report)
+## 📊 Current Evaluation (SWE-bench-Java)
 
-- **File-Level**
-  - Superset Accuracy: 41.76%
-  - Binary Touch Accuracy: 95.60%
-- **Element-Level**
-  - Binary Touch Accuracy: 90.00%
-- **Line-Level**
-  - Binary Touch Accuracy: 10.00%
-
-These results demonstrate strong potential at early-stage localization and a solid foundation for downstream repair and validation.
+| Stage                         | Metric                      | Score      |
+| ----------------------------- | --------------------------- | ---------- |
+| File-Level                    | Superset Acc.               | **41.8 %** |
+| File-Level                    | Binary Touch                | **95.6 %** |
+| Element-Level                 | Binary Touch                | **60.0 %** |
+| Line-Level                    | Superset Acc.               | **7.69 %** |
+| Patch Gen → Rank (End-to-End) | Full Fix Rate (preliminary) | **3.2 %**  |
 
 ---
 
 ## 📝 Citation
 
-If you use this code or refer to our work, please cite our midterm report:
-
 ```bibtex
 @misc{agentlessjava2025,
-  title={Agentless-Java: Adapting Agentless Paradigm to Java Program Repair},
+  title={Agentless-Java: From Fault Localisation to Fully Automated Repair in the Java Ecosystem},
   author={Tianyi Huang and Wenqi Liao and Yiwei Wang and Yuyang Wang},
   year={2025},
-  howpublished={CS 598 Midterm Report, University of Illinois Urbana-Champaign},
+  howpublished={University of Illinois Urbana–Champaign, CS 598 Final Report},
   url={https://github.com/upb3y/Agentless/tree/main/agentless-java}
 }
 ```
@@ -113,6 +134,9 @@ If you use this code or refer to our work, please cite our midterm report:
 
 ## 🙌 Acknowledgements
 
-This work builds on the original [Agentless](https://github.com/OpenAutoCoder/Agentless) framework and was evaluated using the [SWE-bench-Java](https://arxiv.org/abs/2408.14354) benchmark.
+This project builds on the excellent [Agentless](https://github.com/OpenAutoCoder/Agentless) framework and evaluates fixes with the
+[SWE-bench-Java](https://arxiv.org/abs/2408.14354) benchmark.
 
 ---
+
+```
